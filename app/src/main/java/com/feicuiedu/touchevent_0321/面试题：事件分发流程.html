@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>面试题：事件分发流程</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<style type="text/css">
+/* GitHub stylesheet for MarkdownPad (http://markdownpad.com) */
+/* Author: Nicolas Hery - http://nicolashery.com */
+/* Version: b13fe65ca28d2e568c6ed5d7f06581183df8f2ff */
+/* Source: https://github.com/nicolahery/markdownpad-github */
+
+/* RESET
+=============================================================================*/
+
+html, body, div, span, applet, object, iframe, h1, h2, h3, h4, h5, h6, p, blockquote, pre, a, abbr, acronym, address, big, cite, code, del, dfn, em, img, ins, kbd, q, s, samp, small, strike, strong, sub, sup, tt, var, b, u, i, center, dl, dt, dd, ol, ul, li, fieldset, form, label, legend, table, caption, tbody, tfoot, thead, tr, th, td, article, aside, canvas, details, embed, figure, figcaption, footer, header, hgroup, menu, nav, output, ruby, section, summary, time, mark, audio, video {
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+/* BODY
+=============================================================================*/
+
+body {
+  font-family: Helvetica, arial, freesans, clean, sans-serif;
+  font-size: 14px;
+  line-height: 1.6;
+  color: #333;
+  background-color: #fff;
+  padding: 20px;
+  max-width: 960px;
+  margin: 0 auto;
+}
+
+body>*:first-child {
+  margin-top: 0 !important;
+}
+
+body>*:last-child {
+  margin-bottom: 0 !important;
+}
+
+/* BLOCKS
+=============================================================================*/
+
+p, blockquote, ul, ol, dl, table, pre {
+  margin: 15px 0;
+}
+
+/* HEADERS
+=============================================================================*/
+
+h1, h2, h3, h4, h5, h6 {
+  margin: 20px 0 10px;
+  padding: 0;
+  font-weight: bold;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1 tt, h1 code, h2 tt, h2 code, h3 tt, h3 code, h4 tt, h4 code, h5 tt, h5 code, h6 tt, h6 code {
+  font-size: inherit;
+}
+
+h1 {
+  font-size: 28px;
+  color: #000;
+}
+
+h2 {
+  font-size: 24px;
+  border-bottom: 1px solid #ccc;
+  color: #000;
+}
+
+h3 {
+  font-size: 18px;
+}
+
+h4 {
+  font-size: 16px;
+}
+
+h5 {
+  font-size: 14px;
+}
+
+h6 {
+  color: #777;
+  font-size: 14px;
+}
+
+body>h2:first-child, body>h1:first-child, body>h1:first-child+h2, body>h3:first-child, body>h4:first-child, body>h5:first-child, body>h6:first-child {
+  margin-top: 0;
+  padding-top: 0;
+}
+
+a:first-child h1, a:first-child h2, a:first-child h3, a:first-child h4, a:first-child h5, a:first-child h6 {
+  margin-top: 0;
+  padding-top: 0;
+}
+
+h1+p, h2+p, h3+p, h4+p, h5+p, h6+p {
+  margin-top: 10px;
+}
+
+/* LINKS
+=============================================================================*/
+
+a {
+  color: #4183C4;
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+/* LISTS
+=============================================================================*/
+
+ul, ol {
+  padding-left: 30px;
+}
+
+ul li > :first-child, 
+ol li > :first-child, 
+ul li ul:first-of-type, 
+ol li ol:first-of-type, 
+ul li ol:first-of-type, 
+ol li ul:first-of-type {
+  margin-top: 0px;
+}
+
+ul ul, ul ol, ol ol, ol ul {
+  margin-bottom: 0;
+}
+
+dl {
+  padding: 0;
+}
+
+dl dt {
+  font-size: 14px;
+  font-weight: bold;
+  font-style: italic;
+  padding: 0;
+  margin: 15px 0 5px;
+}
+
+dl dt:first-child {
+  padding: 0;
+}
+
+dl dt>:first-child {
+  margin-top: 0px;
+}
+
+dl dt>:last-child {
+  margin-bottom: 0px;
+}
+
+dl dd {
+  margin: 0 0 15px;
+  padding: 0 15px;
+}
+
+dl dd>:first-child {
+  margin-top: 0px;
+}
+
+dl dd>:last-child {
+  margin-bottom: 0px;
+}
+
+/* CODE
+=============================================================================*/
+
+pre, code, tt {
+  font-size: 12px;
+  font-family: Consolas, "Liberation Mono", Courier, monospace;
+}
+
+code, tt {
+  margin: 0 0px;
+  padding: 0px 0px;
+  white-space: nowrap;
+  border: 1px solid #eaeaea;
+  background-color: #f8f8f8;
+  border-radius: 3px;
+}
+
+pre>code {
+  margin: 0;
+  padding: 0;
+  white-space: pre;
+  border: none;
+  background: transparent;
+}
+
+pre {
+  background-color: #f8f8f8;
+  border: 1px solid #ccc;
+  font-size: 13px;
+  line-height: 19px;
+  overflow: auto;
+  padding: 6px 10px;
+  border-radius: 3px;
+}
+
+pre code, pre tt {
+  background-color: transparent;
+  border: none;
+}
+
+kbd {
+    -moz-border-bottom-colors: none;
+    -moz-border-left-colors: none;
+    -moz-border-right-colors: none;
+    -moz-border-top-colors: none;
+    background-color: #DDDDDD;
+    background-image: linear-gradient(#F1F1F1, #DDDDDD);
+    background-repeat: repeat-x;
+    border-color: #DDDDDD #CCCCCC #CCCCCC #DDDDDD;
+    border-image: none;
+    border-radius: 2px 2px 2px 2px;
+    border-style: solid;
+    border-width: 1px;
+    font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
+    line-height: 10px;
+    padding: 1px 4px;
+}
+
+/* QUOTES
+=============================================================================*/
+
+blockquote {
+  border-left: 4px solid #DDD;
+  padding: 0 15px;
+  color: #777;
+}
+
+blockquote>:first-child {
+  margin-top: 0px;
+}
+
+blockquote>:last-child {
+  margin-bottom: 0px;
+}
+
+/* HORIZONTAL RULES
+=============================================================================*/
+
+hr {
+  clear: both;
+  margin: 15px 0;
+  height: 0px;
+  overflow: hidden;
+  border: none;
+  background: transparent;
+  border-bottom: 4px solid #ddd;
+  padding: 0;
+}
+
+/* TABLES
+=============================================================================*/
+
+table th {
+  font-weight: bold;
+}
+
+table th, table td {
+  border: 1px solid #ccc;
+  padding: 6px 13px;
+}
+
+table tr {
+  border-top: 1px solid #ccc;
+  background-color: #fff;
+}
+
+table tr:nth-child(2n) {
+  background-color: #f8f8f8;
+}
+
+/* IMAGES
+=============================================================================*/
+
+img {
+  max-width: 100%
+}
+</style>
+</head>
+<body>
+<h1>面试题：事件分发的流程</h1>
+<p>事件分发是View的一个核心知识点，在开发中经常遇到滑动冲突，他的解决方式的理论基础就是事件分发机制。</p>
+<p>事件分发机制的流程是什么呢？首先认识一下事件分发的基本点。</p>
+<h2>1. 事件的基本认知</h2>
+<h4>1.1 事件分发的对象：</h4>
+<blockquote>
+<p>事件</p>
+</blockquote>
+<p>当用户触摸屏幕时（View或ViewGroup派生的控件），将产生点击事件（Touch事件）。</p>
+<p>Touch事件相关细节（发生触摸的位置、时间、历史记录、手势动作等）被封装成MotionEvent对象
+主要发生的Touch事件有如下四种：</p>
+<blockquote>
+<p>MotionEvent.ACTION_DOWN：按下View（所有事件的开始）</p>
+<p>MotionEvent.ACTION_MOVE：滑动View</p>
+<p>MotionEvent.ACTION_CANCEL：非人为原因结束本次事件</p>
+<p>MotionEvent.ACTION_UP：抬起View（与DOWN对应）</p>
+</blockquote>
+<p>事件列：从手指接触屏幕至手指离开屏幕，这个过程产生的一系列事件
+任何事件列都是以DOWN事件开始，UP事件结束，中间有无数的MOVE事件。</p>
+<h4>1.2 事件分发的本质</h4>
+<p>将点击事件（MotionEvent）向某个View进行传递并最终得到处理。</p>
+<p>即当一个点击事件发生后，系统需要将这个事件传递给一个具体的View去处理。这个事件传递的过程就是分发过程。</p>
+<h4>1.3 事件在哪些对象之间进行传递</h4>
+<p>一个点击事件产生后，传递顺序是：Activity（Window） -&gt; ViewGroup -&gt; View
+Android的UI界面是由Activity、ViewGroup、View及其派生类组合而成的。</p>
+<h4>1.4 事件分发过程由哪些方法协作完成</h4>
+<p>dispatchTouchEvent() 、onInterceptTouchEvent()和onTouchEvent()</p>
+<blockquote>
+<p>dispatchTouchEvent()</p>
+</blockquote>
+<p>用来进行事件的分发。如果事件能够传递给当前的View，那么此方法一定会被调用，，返回值受到当前View的onTouchEvent和下级的dispatchTouchEvent()方法的影响，表示是否消费当前的事件。</p>
+<blockquote>
+<p>onInterceptTouchEvent()</p>
+</blockquote>
+<p>在dispatchTouchEvent内部调用，用来判断是否拦截某一事件，返回结果表示是否拦截当前的事件。如果当前View拦截了某个事件，那么在同一个事件序列中，此方法不会被再次调用。</p>
+<blockquote>
+<p>onTouchEvent()</p>
+</blockquote>
+<p>在dispatchTouchEvent方法中调用，用来处理点击事件，返回结果表示是否消费当前事件，如果不消费，那么同一个事件列的其他事件，当前View无法再次接收。</p>
+<p>默认状态下会一直向下传递，传递给最后的View，然后View来消费事件。</p>
+<h2>2. 事件分发流程</h2>
+<p>根据上述事件分发的三个方法，使用代码说明流程可以简单如下：</p>
+<pre><code>// 点击事件产生后，会直接调用dispatchTouchEvent（）方法
+public boolean dispatchTouchEvent(MotionEvent ev) {
+
+    //代表是否消耗事件
+    boolean consume = false;
+
+
+    if (onInterceptTouchEvent(ev)) {
+    //如果onInterceptTouchEvent()返回true则代表当前View拦截了点击事件
+    //则该点击事件则会交给当前View进行处理
+    //即调用onTouchEvent (）方法去处理点击事件
+      consume = onTouchEvent (ev) ;
+
+    } else {
+      //如果onInterceptTouchEvent()返回false则代表当前View不拦截点击事件
+      //则该点击事件则会继续传递给它的子元素
+      //子元素的dispatchTouchEvent（）就会被调用，重复上述过程
+      //直到点击事件被最终处理为止
+      consume = child.dispatchTouchEvent (ev) ;
+    }
+    return consume;
+   }
+</code></pre>
+
+<p>具体的分发流程，可以参见下图：</p>
+<p><img src="http://i.imgur.com/FHnkJej.png" /></p>
+<p><strong>dispatchTouchEvent()</strong></p>
+<ol>
+<li>
+<p>默认情况：根据当前对象的不同而返回方法不同</p>
+<pre><code>Activity    
+super.dispatchTouchEvent()  
+即调用父类ViewGroup的dispatchTouchEvent()
+
+ViewGroup   
+onIntercepTouchEvent()  
+即调用自身的onIntercepTouchEvent()
+
+View    
+onTouchEvent（）  
+即调用自身的onTouchEvent（）
+</code></pre>
+
+</li>
+<li>
+<p>返回true</p>
+<pre><code>消费事件
+事件不会往下传递
+后续事件（Move、Up）会继续分发到该View
+</code></pre>
+
+</li>
+<li>
+<p>返回false</p>
+<pre><code>不消费事件
+事件不会往下传递
+将事件回传给父控件的onTouchEvent()处理
+Activity例外：返回false=消费事件
+</code></pre>
+
+</li>
+</ol>
+<p><strong>onTouchEvent()</strong></p>
+<ol>
+<li>
+<p>返回true</p>
+<pre><code>自己处理（消费）该事情
+事件停止传递
+该事件序列的后续事件（Move、Up）让其处理；
+</code></pre>
+
+</li>
+<li>
+<p>返回false（同默认实现：调用父类onTouchEvent()）</p>
+<pre><code>不处理（消费）该事件
+事件往上传递给父控件的onTouchEvent()处理
+当前View不再接受此事件列的其他事件（Move、Up）；
+</code></pre>
+
+</li>
+</ol>
+<p><strong>onInterceptTouchEvent()</strong></p>
+<ol>
+<li>
+<p>返回true</p>
+<pre><code>拦截事件
+事件不会向下传递
+自己处理事件，即执行自己的onTouchEvent()
+统一事件列的其他事件都直接由该View处理，但同一事件列此方法不再调用
+</code></pre>
+
+</li>
+<li>
+<p>返回false</p>
+<pre><code>不拦截事件
+事件继续向下传递
+事件传递到子View，调用View.dispatchTouchEvent()方法处理
+仍然接收此事件列的其他事件
+</code></pre>
+
+</li>
+</ol>
+<h2>3. 场景实践</h2>
+<p>我们采用一个场景来理解一下分发的流程。</p>
+<p>首先，模拟一个场景：</p>
+<p><img src="http://i.imgur.com/ipbwMlO.png" /></p>
+<p>分别创建View、ViewGroup，搭建场景，然后重写里面事件分发的方法，根据打印日志，了解分发的流程。</p>
+<pre><code>@Override
+public boolean dispatchTouchEvent(MotionEvent event) {
+    switch (event.getAction()) {
+        case MotionEvent.ACTION_DOWN:
+            Log.d(TAG, &quot;[dispatchTouchEvent] -&gt; ACTION_DOWN&quot;);
+            break;
+        case MotionEvent.ACTION_MOVE:
+            Log.d(TAG, &quot;[dispatchTouchEvent] -&gt; ACTION_MOVE&quot;);
+            break;
+        case MotionEvent.ACTION_UP:
+            Log.d(TAG, &quot;[dispatchTouchEvent] -&gt; ACTION_UP&quot;);
+            break;
+        case MotionEvent.ACTION_CANCEL:
+            Log.d(TAG, &quot;[dispatchTouchEvent] -&gt; ACTION_CANCEL&quot;);
+            break;
+        default:
+            break;
+    }
+    boolean superReturn = super.dispatchTouchEvent(event);
+    Log.i(TAG, &quot;[dispatchTouchEvent] return &quot; + superReturn);
+    return superReturn;
+}
+
+@Override
+public boolean onInterceptTouchEvent(MotionEvent event) {
+    switch (event.getAction()) {
+        case MotionEvent.ACTION_DOWN:
+            Log.d(TAG, &quot;[onInterceptTouchEvent] -&gt; ACTION_DOWN&quot;);
+            break;
+        case MotionEvent.ACTION_MOVE:
+            Log.d(TAG, &quot;[onInterceptTouchEvent] -&gt; ACTION_MOVE&quot;);
+            break;
+        case MotionEvent.ACTION_UP:
+            Log.d(TAG, &quot;[onInterceptTouchEvent] -&gt; ACTION_UP&quot;);
+            break;
+        case MotionEvent.ACTION_CANCEL:
+            Log.d(TAG, &quot;[onInterceptTouchEvent] -&gt; ACTION_CANCEL&quot;);
+            break;
+        default:
+            break;
+    }
+    boolean superReturn = super.onInterceptTouchEvent(event);
+    Log.i(TAG, &quot;[onInterceptTouchEvent] return &quot; + superReturn);
+    return superReturn;
+}
+
+@Override
+public boolean onTouchEvent(MotionEvent event) {
+    switch (event.getAction()) {
+        case MotionEvent.ACTION_DOWN:
+            Log.d(TAG, &quot;[onTouchEvent] -&gt; ACTION_DOWN&quot;);
+            break;
+        case MotionEvent.ACTION_MOVE:
+            Log.d(TAG, &quot;[onTouchEvent] -&gt; ACTION_MOVE&quot;);
+            break;
+        case MotionEvent.ACTION_UP:
+            Log.d(TAG, &quot;[onTouchEvent] -&gt; ACTION_UP&quot;);
+            break;
+        case MotionEvent.ACTION_CANCEL:
+            Log.d(TAG, &quot;[onTouchEvent] -&gt; ACTION_CANCEL&quot;);
+            break;
+        default:
+            break;
+    }
+    boolean superReturn = super.onTouchEvent(event);
+    Log.i(TAG, &quot;[onTouchEvent] return &quot; + superReturn);
+    return superReturn;
+}
+</code></pre>
+
+<p>可以分别修改相应的返回值，查看具体的流程。</p>
+
+</body>
+</html>
+<!-- This document was created with MarkdownPad, the Markdown editor for Windows (http://markdownpad.com) -->
